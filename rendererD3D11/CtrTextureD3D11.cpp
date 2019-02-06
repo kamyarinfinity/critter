@@ -479,6 +479,7 @@ TextureD3D11::save(const std::string& filePathName,
     bool reverse = internalFormat == PF_A8R8G8B8;
 
     size_t extension = filePathName.rfind(".");
+	std::string extension_str = filePathName.substr(extension);
 
     if (internalFormat == PF_FLOAT32_RGBA)
     {
@@ -689,8 +690,8 @@ TextureD3D11::save(const std::string& filePathName,
                     break;
             }
 
-            std::string mmmImageFilePathName = filePathName.substr(0, extension) + "MMM.dds";
-            std::string rgbImageFilePathName = filePathName.substr(0, extension) + "RGB.dds";
+            std::string mmmImageFilePathName = filePathName.substr(0, extension) + "MMM"+extension_str;
+            std::string rgbImageFilePathName = filePathName.substr(0, extension) + "RGB"+extension_str;
 
             // Save images.
             if(rgbOnly)
@@ -699,7 +700,7 @@ TextureD3D11::save(const std::string& filePathName,
                 {
                     char mipImageFilePathName[512];
                     memset(mipImageFilePathName, 0, 512);
-                    sprintf_s(mipImageFilePathName, "%s%d%s", filePathName.substr(0, extension).c_str(), mipLevel, "RGB.dds");
+                    sprintf_s(mipImageFilePathName, "%s%d%s", filePathName.substr(0, extension).c_str(), mipLevel, "RGB"+extension_str);
                     // Copy texture image into mip image.
                     copyMip (mipImage, textureImageRGB, mipLevel);
                     mipImage->save(std::string(mipImageFilePathName));
@@ -715,14 +716,14 @@ TextureD3D11::save(const std::string& filePathName,
                 {
                     char mipImageFilePathName[512];
                     memset(mipImageFilePathName, 0, 512);
-                    sprintf_s(mipImageFilePathName, "%s%d%s", filePathName.substr(0, extension).c_str(), mipLevel, "RGB.dds");
+                    sprintf_s(mipImageFilePathName, "%s%d%s", filePathName.substr(0, extension).c_str(), mipLevel, "RGB"+extension_str);
 
                     // Copy texture image into mip image.
                     copyMip (mipImage, textureImageRGB, mipLevel);
                     mipImage->save(std::string(mipImageFilePathName));
 
                     memset(mipImageFilePathName, 0, 512);
-                    sprintf_s(mipImageFilePathName, "%s%d%s", filePathName.substr(0, extension).c_str(), mipLevel, "MMM.dds");
+                    sprintf_s(mipImageFilePathName, "%s%d%s", filePathName.substr(0, extension).c_str(), mipLevel, "MMM"+extension_str);
                     // Copy texture image into mip image.
                     copyMip (mipImage, textureImageMMM, mipLevel);
                     mipImage->save(mipImageFilePathName);
@@ -740,7 +741,7 @@ TextureD3D11::save(const std::string& filePathName,
             {
                 char mipImageFilePathName[512];
                 memset(mipImageFilePathName, 0, 512);
-                sprintf_s(mipImageFilePathName, "%s%d%s", filePathName.substr(0, extension).c_str(), mipLevel, ".dds");
+                sprintf_s(mipImageFilePathName, "%s%d%s", filePathName.substr(0, extension).c_str(), mipLevel, ""+extension_str);
 
                 // Copy texture image into mip image.
                 copyMip (mipImage, textureImage, mipLevel);
