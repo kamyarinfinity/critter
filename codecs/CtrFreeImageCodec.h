@@ -87,7 +87,7 @@ namespace Ctr
         static RegisteredCodecList msCodecList;
 
         /** Common encoding routine. */
-        FIBITMAP* encode(MemoryDataStreamPtr& input, CodecDataPtr& pData) const;
+        FIBITMAP* encode(MemoryDataStreamPtr& input, CodecDataPtr& pData, size_t offset = 0) const;
 
     public:
         FreeImageCodec(const std::string &type, unsigned int fiType);
