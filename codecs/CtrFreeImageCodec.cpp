@@ -185,12 +185,12 @@ namespace Ctr
     { 
     }
     //---------------------------------------------------------------------
-    FIBITMAP* FreeImageCodec::encode(MemoryDataStreamPtr& input, CodecDataPtr& pData) const
+    FIBITMAP* FreeImageCodec::encode(MemoryDataStreamPtr& input, CodecDataPtr& pData, size_t offset) const
     {
         FIBITMAP* ret = 0;
 
         ImageData* pImgData = static_cast< ImageData * >(pData.get());
-        PixelBox src(pImgData->width, pImgData->height, pImgData->depth, pImgData->format, input->getPtr());
+        //PixelBox src(pImgData->width, pImgData->height, pImgData->depth, pImgData->format, input->getPtr());
 
         // The required format, which will adjust to the format
         // actually supported by FreeImage.
@@ -301,7 +301,7 @@ namespace Ctr
         }
 
         bool conversionRequired = false;
-        unsigned char* srcData = input->getPtr();
+        unsigned char* srcData = input->getPtr() + offset;
 
         // Check BPP
         unsigned bpp = static_cast<unsigned>(PixelUtil::getNumElemBits(requiredFormat));
@@ -420,17 +420,49 @@ namespace Ctr
                                     const std::string& outFileName, 
                                     Codec::CodecDataPtr& pData) const
     {
-        FIBITMAP* fiBitmap = encode(input, pData);
+		ImageData* orig_img_data = static_cast<ImageData*>(pData.get());
+		size_t offset = 0;
+		size_t w, h, d;
+		size_t orig_w = orig_img_data->width, orig_h = orig_img_data->height, orig_d = orig_img_data->depth;
+		size_t images = orig_img_data->num_images, mipmaps = orig_img_data->num_mipmaps;
+		Ctr::PixelFormat format = orig_img_data->format;
+		for (size_t i = 0; i < images; i++)
+		{
+			w = orig_w;
+			h = orig_h;
+			d = orig_d;
+			for (size_t j = 0; j < mipmaps; j++)
+			{
+				ImageData* current_img_data = static_cast<ImageData *>(pData.get());
+				current_img_data->width = w;
+				current_img_data->height = h;
+				current_img_data->depth = d;
 
-        if ((FREE_IMAGE_FORMAT)mFreeImageType == FIF_TIFF)
-        {
-            FreeImage_Save((FREE_IMAGE_FORMAT)mFreeImageType, fiBitmap, outFileName.c_str(), TIFF_NONE);
-        }
-        else
-        {
-            FreeImage_Save((FREE_IMAGE_FORMAT)mFreeImageType, fiBitmap, outFileName.c_str());
-        }
-        FreeImage_Unload(fiBitmap);
+				FIBITMAP* fiBitmap = encode(input, pData, offset);
+				std::string strExt;
+				size_t ext_pos = outFileName.rfind(".");
+
+				std::string filename = outFileName.substr(0,ext_pos);
+				filename += "-" + std::to_string(i) + "-LOD_"+ std::to_string(j) + outFileName.substr(ext_pos);
+
+				if ((FREE_IMAGE_FORMAT)mFreeImageType == FIF_TIFF)
+				{
+					FreeImage_Save((FREE_IMAGE_FORMAT)mFreeImageType, fiBitmap, filename.c_str(), TIFF_NONE);
+				}
+				else
+				{
+					FreeImage_Save((FREE_IMAGE_FORMAT)mFreeImageType, fiBitmap, filename.c_str());
+				}
+				FreeImage_Unload(fiBitmap);
+
+				// go to next image
+				offset += PixelUtil::getMemorySize(w, h, d, format);
+				if (w != 1) w /= 2;
+				if (h != 1) h /= 2;
+				if (d != 1) d /= 2;
+
+			}
+		}
     }
     //---------------------------------------------------------------------
     Codec::DecodeResult FreeImageCodec::decode(DataStreamPtr& input) const
